@@ -1,9 +1,9 @@
-function [w_des] = lqrcontrol(s,idx)
+function [w_des] = lqrcontrol(s,idx,params,traj)
 % Note: sdes(13:15) contains the desired accelerations
 
-global K params traj log
+global K log
 
-if ~exist('idx','var')
+if isempty(s)
     lqrdesign
 else
 

@@ -1,10 +1,12 @@
 function params = load_params()
 
+% These are for the dynamic simulator only
 params.controlHandle = @lqrcontrol;
 params.dynamicsHandle = @dynamics;
 
 % Safety
 params.maxAngle = 45*pi()/180;
+
 
 %% Quadrotor Properties
 % The angle of the gripper relative to the quadrotor

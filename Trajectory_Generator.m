@@ -9,8 +9,8 @@ function traj = Trajectory_Generator(saferegion, start, pickup, finish, speed)
 %% Parameters and Thresholds
 
 % Set the desired thresholds here:
-velocity_threshold = 1*speed; % 3*speed
-acc_threshold = 50; % 10
+velocity_threshold = 3*speed;
+acc_threshold = 10;
 maxPsidot = pi/4;
 
 % Parameters
@@ -24,7 +24,7 @@ s(1:4,:) = [start' pickup' finish'];
 
 sdot = zeros(4,3);   % xdot, ydot, zdot, psidot
 sddot = zeros(4,3);  % ddots
- 
+
 % A first guess at keytimes.  Obviously, they are too fast.
 keytimes(1) = 0;
 keytimes(2) = .5;
@@ -80,6 +80,8 @@ for key = 1:length(keytimes)-1                          % Segment Loop
             D4val{idx,key} = polyval(polyder(polyder(polyder(polyder(coeffs{idx,key})))),0:tstep:t-tstep);
         end
         
+        %% Feedforward control
+        
         xdd = D2val{1,key}';
         ydd = D2val{2,key}';
         zdd = D2val{3,key}';
@@ -93,29 +95,32 @@ for key = 1:length(keytimes)-1                          % Segment Loop
         traj.u1{key} = norm_zb*params.m;
         
         % Normalize the zb vector
+        % #### Can I use unit?
         zb_unit = zb ./ (rownorm(zb)*ones(1,3));
         
         % Store psi
         traj.psi{key} = val{4,key}';
-        
-        % Determine xc, the x vector of the frame that accounts only for
-        % yaw angle.
+%         
+%         % Determine xc, the x vector of the frame that accounts only for
+%         % yaw angle.
 %         xc = [cos(traj.psi{key}), sin(traj.psi{key}), zeros(length(traj.psi{key}),1)];
-        
-        % Determine the unit vectors representing the body frame y axis in
-        % the world coordinates
+%         
+%         % Determine the unit vectors representing the body frame y axis in
+%         % the world coordinates
 %         xb_cross_xc = cross(zb_unit, xc);
 %         yb = xb_cross_xc ./ (rownorm(xb_cross_xc)*ones(1,3));
-        
-        % And the body frame x axis in world coordinates
+%         
+%         % And the body frame x axis in world coordinates
 %         xb = cross(yb, zb);
         
         % We can determine the euler angles from the Z - X - Y
-        % representation.  We only want phi to be from -pi/2 to pi/2
+        % representation.
         traj.phi{key} = asin(-zb_unit(:,2));
         traj.theta{key} = atan2(zb_unit(:,1),zb_unit(:,3));
         
-        % Check if our trajectory is too aggressive
+        % And the angular velocity in the body fixed frame
+        
+        %% Check if our trajectory is too aggressive
         checkthresh = [...
             max(abs(traj.phi{key})) > params.maxAngle ...
             max(abs(traj.theta{key})) > params.maxAngle ...
@@ -142,9 +147,8 @@ for key = 1:length(keytimes)-1                          % Segment Loop
             break;
         end
         
-        if t >= 50
-            
-            disp('The trajectory is longer than 50 seconds.  You may want to just quit now and change your parameters.');
+        if t > 15
+            disp('The trajectory is longer than 15 seconds.  You may want to just quit now and change your parameters.');
             keyboard
         end
     end

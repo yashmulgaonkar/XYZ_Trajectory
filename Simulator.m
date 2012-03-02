@@ -1,14 +1,14 @@
 % This is the simulator for the quadrotor
-function sdot = Simulator(t, s0)
+function sdot = Simulator(t, s0, params, traj)
 
-global traj params log
+global log
 
 log.time = [log.time; t];
 
 % Lets use understandable values
-x = s0(1);
-y = s0(2);
-z = s0(3);
+% x = s0(1);
+% y = s0(2);
+% z = s0(3);
 xdot = s0(4);
 ydot = s0(5);
 zdot = s0(6);
@@ -68,7 +68,7 @@ psidot = euler_angles_dot(3);
 idx = find(traj.time > t, 1, 'first');
 if isempty(idx); idx = length(traj.time); end;
 
-[w_des] = feval(params.controlHandle, s0(1:12), idx);
+[w_des] = feval(params.controlHandle, s0(1:12), idx, params, traj);
 
 %% Propeller spinups with saturation constraints
 km = 20; % 1/s

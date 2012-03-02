@@ -1,0 +1,46 @@
+The files in this directory written by Justin Thomas
+
+Overview of files and purposes:
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Dynamic_Sim.m
+
+This function requires a trajectory stored as traj to be a global variable and it runs a dynmaic simulation using Simulator and using the controller specified in load_params.m.  Currently, I am simulating using an LQR controller that is located in lqrcontrol.m and designed in lqrdesign.m.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+EulToRot.m
+
+This function takes Euler angles and generates a Rotation matrix using the Z - X - Y representation.  In other words, in order to rotate from the world frame to the body frame, we rotate about the Z axis first, then the X, and finally the Y.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+load_params.m
+
+This function contains parameters detailing the dynamic properties such as mass, moment of inertia, thrust, prop speeds, and other miscellaneous parameters that dictate the trajectory and are used for the dynamic simulation.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lqrcontrol.m
+
+This function takes the current state and the index in the trajectory as inputs and returns desired rotor speeds.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+lqrdesign.m
+
+This script generates a global K (for LQR) that is used in lqrcontrol
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+plots.m
+
+This script plots the trajectory and actual values achieved from the dynamic simulation.  Plots include position, orientation, propeller speeds, and a 3 dimensional overview.  Finally, the error at pickup is determined and the maximum thrust (in the dynamic simulation) is displayed.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Simulator.m
+
+The simulator is the function which is called through ode45 in Dynamic_Sim.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Trajectory_Generator.m
+
+The trajectory generator takes a saferegion [xmin, ymin, zmin, xmax, ymax, zmax], a start position [x, y, z, psi], a pickup position [x, y, z, psi], a finish position [x, y, z, psi], and a pickup speed.  It generates a trajectory and returns the traj structure which contains all the information needed for feedforward control, etc.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

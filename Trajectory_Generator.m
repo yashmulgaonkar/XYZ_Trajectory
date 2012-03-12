@@ -1,5 +1,5 @@
 function traj = Trajectory_Generator(saferegion, start, pickup, finish, speed)
-% function traj = Trajectory_Generator(saferegion, start_pos, pickup_pos, end_pos, attackangle, speed)
+% function traj = Trajectory_Generator(saferegion, start_pos, pickup_pos, end_pos, speed)
 %
 % This program is used to determine an appropriate trajectory for a
 % grasping quadrotor.  The positions are specified as [x; y; z; psi;].  The
@@ -36,8 +36,6 @@ attackangle = atan2(finish(2)-start(2), finish(1)-start(1));
 sdot(1,2) = speed*cos(attackangle); % xdot at pickup
 sdot(2,2) = speed*sin(attackangle); % ydot at pickup
 
-% disp(num2str(keytimes));
-
 %% Now we determine a trajectory using smooth polynomial curves
 
 polyorder = [7 7 7 3];
@@ -66,13 +64,14 @@ for key = 1:length(keytimes)-1                          % Segment Loop
                 bcs = [s(idx,key); sdot(idx,key); sddot(idx,key); zeros(halfnumbcs - 3,1);...
                     s(idx,key + 1); sdot(idx,key + 1); sddot(idx,key + 1); zeros(halfnumbcs - 3,1);];
             elseif n >=3
-                bcs = [s(idx,key); sdot(idx,key); zeros(halfnumbcs - 3,1);...
-                    s(idx,key + 1); sdot(idx,key + 1); zeros(halfnumbcs - 3,1);];
+                bcs = [s(idx,key); sdot(idx,key); zeros(halfnumbcs - 2,1);...
+                    s(idx,key + 1); sdot(idx,key + 1); zeros(halfnumbcs - 2,1);];
             end
             
             % Find the analytical solution
             coeffs{idx,key} = flipud(Start_And_End_Cond^(-1)*bcs);
             
+            % And find all the interesting derivatives
             val{idx,key} = polyval(coeffs{idx,key},0:tstep:t-tstep);
             D1val{idx,key} = polyval(polyder(coeffs{idx,key}),0:tstep:t-tstep);
             D2val{idx,key} = polyval(polyder(polyder(coeffs{idx,key})),0:tstep:t-tstep);
@@ -136,11 +135,11 @@ for key = 1:length(keytimes)-1                          % Segment Loop
             lastcheckthresh = checkthresh;
             
             % Shift all successive keytimes appropriately
-            keytimes(key + 1:end) = keytimes(key + 1:end) + .1;
+            keytimes(key + 1:end) = keytimes(key + 1:end) + .3;
             
         else
             factors = {'Phi', 'Theta', 'Thrust', 'Velocity', 'Acceleration', 'Psidot'};
-%             factors = {'Phi', 'Theta', 'Thrust', 'M1', 'M2', 'Velocity', 'Acceleration', 'Psi Moment', 'Psidot'};
+            % factors = {'Phi', 'Theta', 'Thrust', 'M1', 'M2', 'Velocity', 'Acceleration', 'Psi Moment', 'Psidot'};
             disp(['Segment ', num2str(key), ' Duration: ', num2str(t), ' seconds']);
             disp(['Limiting Factor(s):', factors(lastcheckthresh)]);
             
@@ -154,6 +153,7 @@ for key = 1:length(keytimes)-1                          % Segment Loop
     end
 end
 
+%% Store the trajectory information
 traj.tstep = tstep;
 traj.keytimes = keytimes;
 
@@ -171,9 +171,9 @@ traj.start = start;
 traj.pickup = pickup;
 traj.finish = finish;
 
-% traj.phidot = [traj.phidot{:}]';
-% traj.thetadot = [traj.thetadot{:}]';
-% traj.psidot = [D1val{4,:}]';
+% traj.p = []';
+% traj.q = []';
+% traj.r = []';
 
 % traj.u = [[u1{:}]' [u2{:}]' [u3{:}]' [u4{:}]'];
 traj.u1 = cell2mat(traj.u1');
@@ -182,6 +182,11 @@ traj.u1 = cell2mat(traj.u1');
 traj.pos = [traj.x traj.y traj.z];
 traj.vel = [[D1val{1,:}]' [D1val{2,:}]' [D1val{3,:}]'];
 traj.acc = [[D2val{1,:}]' [D2val{2,:}]' [D2val{3,:}]'];
+
+traj.coeffs.x = [coeffs{1,:}];
+traj.coeffs.y = [coeffs{2,:}];
+traj.coeffs.z = [coeffs{3,:}];
+traj.coeffs.psi = [coeffs{4,:}];
 
 save('traj','traj');
 

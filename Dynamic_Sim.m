@@ -1,7 +1,7 @@
 function Dynamic_Sim(varargin)
 
 % We only want to run the simulation if true is provided as an argument
-if (nargin > 0) && varargin{1}
+if isequal(nargin, 0) || varargin{1}
     
     global log
     

@@ -28,6 +28,8 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
                 
             case 'feedforward', feedforward = varargin{i+1};
 
+            case 'use_int', use_int = varargin{i+1};
+
             otherwise, error(['Unkown parameter: ' varargin{i}]);
         end
     end
@@ -93,7 +95,7 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
     % Load the desired positions into the curr_state structure
     curr_state.x_des = x_des;
     curr_state.y_des = y_des;
-    curr_state.z_des = z_des;    
+    curr_state.z_des = z_des;
     curr_state.psi_des=psides;
 
     % Store our desired velocities into readable variables

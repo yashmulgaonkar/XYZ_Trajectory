@@ -5,7 +5,7 @@ params.controlHandle = @lqrcontrol;
 params.dynamicsHandle = @dynamics;
 
 % Safety
-params.maxAngle = 45*pi()/180;
+params.maxAngle = 20*pi()/180;
 
 
 %% Quadrotor Properties

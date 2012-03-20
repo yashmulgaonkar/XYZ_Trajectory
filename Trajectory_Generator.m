@@ -250,7 +250,6 @@ end
 Start_And_End_Cond = [startcond; endcond;];
 end
 
-
 function vec = basisgen(t, n)
 % This function generates a basis vector of order n at time t.  It has a
 % dimension of n+1 by 1 and takes the form [t^n t^(n-1) ... t 1]'

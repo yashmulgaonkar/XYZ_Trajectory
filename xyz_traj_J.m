@@ -8,6 +8,9 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
     max_xyint=0.4;
     pd_cmd = asctec_PDCmd('empty');
     
+    % Get the current timer for the state
+    timer=curr_state.state_timer;
+    
     persistent params
     
     % This is executed the first time xyz_traj_J is ran
@@ -15,6 +18,7 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
         curr_state.first_run_in_state=0;
         curr_state.reset_vars= 0;
         params = load_params();
+%         disp(['state_timer start: ', num2str(timer)]);
     end
     
     use_int = 1;
@@ -27,8 +31,10 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
             case 'traj', traj = varargin{i+1};
                 
             case 'feedforward', feedforward = varargin{i+1};
-
+                
             case 'use_int', use_int = varargin{i+1};
+                
+            case 'servo', servo = varargin{i+1}; %#ok<NASGU>
 
             otherwise, error(['Unkown parameter: ' varargin{i}]);
         end
@@ -54,9 +60,6 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
     kp_z = gains.kp_z;
     kd_z = gains.kd_z;
     ki_z = gains.ki_z;
-    
-    % Get the current timer for the state
-    timer=curr_state.state_timer;
     
     % Store our current state estimate into readable variables
     x_est=curr_state.x_est;
@@ -124,7 +127,7 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
         curr_state.th_int = th_int;
         curr_state.theta_int = theta_int;   
     else
-        phi_int=curr_state.phi_int; %#ok<UNRCH>
+        phi_int=curr_state.phi_int;
         th_int=curr_state.th_int;
         theta_int=curr_state.theta_int;
     end
@@ -168,9 +171,8 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
         % Add the feedforward pitch
         thetades = thetades + traj.theta(idx);
         
-        % Determine the thrust command (above hover)
-        ff_th_cmd = sqrt((traj.u1(idx) - params.m*params.g)/(4*params.kf))*(1/40);
-        th_cmd = th_cmd + ff_th_cmd;
+        % Determine the feedforward thrust command offset (above hover)
+        th_cmd = th2cmd(traj.u1(idx) - params.m*params.g + cmd2th(th_cmd,params),params);
         
     end
     
@@ -178,12 +180,30 @@ function [pd_cmd,  curr_state] = xyz_traj_J(curr_state, quad, gains, varargin)
     th_cmd = max(min(th_cmd,200),0);
     pd_cmd.thrust = round(th_cmd);
     
+    % Feed forward on roll and pitch
+    pd_cmd.roll = phides;
+    pd_cmd.pitch = thetades;
+    
     % Establish angular rates to achieve angular orientation
-    pd_cmd.roll_delta = 220 * (phides-phi);
-    pd_cmd.pitch_delta = 220 * (thetades-theta);
+    pd_cmd.roll_delta = pd_cmd.kp_roll * (phides-phi);
+    pd_cmd.pitch_delta = pd_cmd.kp_pitch * (thetades-theta);
     
     curr_state.phi_des = traj.phi(idx);
     curr_state.theta_des = traj.theta(idx);
     curr_state.psi_des = traj.psi(idx);
     
+end
+
+% Note: the (39*th_cmd + 1080) is a linear fit to the prop speed vs th_cmd
+% and is based on experimental data. Currently, this is just a guess and 
+% should be verified at some point for each individual quadrotor.
+
+function th = cmd2th(th_cmd,params)
+% Convert a thrust command to a thrust
+th = (39*th_cmd + 1080)^2*params.kf;
+end
+
+function th_cmd = th2cmd(th,params)
+% Convert a thrust to a thrust command
+th_cmd = (sqrt(th/params.kf) - 1080)/39;
 end

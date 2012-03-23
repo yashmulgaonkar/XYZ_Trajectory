@@ -1,10 +1,12 @@
-function traj = Trajectory_Generator(saferegion, start, pickup, finish, speed)
+function traj = Trajectory_Generator(saferegion, start, pickup, finish, speed, pickup_vertical_velocity)
 % function traj = Trajectory_Generator(saferegion, start_pos, pickup_pos, end_pos, speed)
 %
 % This program is used to determine an appropriate trajectory for a
 % grasping quadrotor.  The positions are specified as [x; y; z; psi;].  The
-% saferegion is [xmin ymin zmin xmax ymax zmax];  speed is the speed at
-% which the quadrotor will actually be picking up the crawler.
+% saferegion is [xmin ymin zmin xmax ymax zmax].  speed is the speed at
+% which the quadrotor will actually be picking up the crawler.  The
+% pickup_vertical_velocity is the vertical velocity that the trajectory
+% will have at the pickup point.  Units are m, m/s, and rad.
 
 %% Parameters and Thresholds
 
@@ -35,6 +37,10 @@ keytimes(3) = 1;
 attackangle = atan2(finish(2)-start(2), finish(1)-start(1));
 sdot(1,2) = speed*cos(attackangle); % xdot at pickup
 sdot(2,2) = speed*sin(attackangle); % ydot at pickup
+
+% Let's be safe
+limit = .2;
+sdot(3,2) = max(min(pickup_vertical_velocity,limit),0);
 
 %% Now we determine a trajectory using smooth polynomial curves
 
